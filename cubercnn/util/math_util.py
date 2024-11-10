@@ -8,7 +8,7 @@ from pytorch3d.renderer.lighting import PointLights
 from pytorch3d.renderer.mesh.renderer import MeshRenderer
 from pytorch3d.renderer.mesh.shader import SoftPhongShader
 import cv2
-import torch 
+import torch
 from pytorch3d.structures import Meshes
 from detectron2.structures import BoxMode
 from pytorch3d.renderer import TexturesVertex
@@ -17,14 +17,14 @@ from pytorch3d.structures.meshes import (
 )
 
 from pytorch3d.renderer import (
-    PerspectiveCameras, 
+    PerspectiveCameras,
     RasterizationSettings,
     MeshRasterizer
 )
 
 from pytorch3d.renderer import (
-    PerspectiveCameras, 
-    SoftSilhouetteShader, 
+    PerspectiveCameras,
+    SoftSilhouetteShader,
     RasterizationSettings,
     MeshRasterizer
 )
@@ -110,7 +110,7 @@ def to_float_tensor(input):
 
     if data_type != torch.Tensor:
         input = torch.tensor(input)
-    
+
     return input.float()
 
 def get_cuboid_verts_faces(box3d=None, R=None):
@@ -128,17 +128,17 @@ def get_cuboid_verts_faces(box3d=None, R=None):
 
     # make sure types are correct
     box3d = to_float_tensor(box3d)
-    
+
     if R is not None:
         R = to_float_tensor(R)
 
     squeeze = len(box3d.shape) == 1
-    
-    if squeeze:    
+
+    if squeeze:
         box3d = box3d.unsqueeze(0)
         if R is not None:
             R = R.unsqueeze(0)
-    
+
     n = len(box3d)
 
     x3d = box3d[:, 0].unsqueeze(1)
@@ -184,7 +184,7 @@ def get_cuboid_verts_faces(box3d=None, R=None):
 
         # rotate
         verts = R @ verts
-    
+
     # translate
     verts[:, 0, :] += x3d
     verts[:, 1, :] += y3d
@@ -223,13 +223,13 @@ def get_cuboid_verts(K, box3d, R=None, view_R=None, view_T=None):
     # make sure types are correct
     K = to_float_tensor(K)
     box3d = to_float_tensor(box3d)
-    
+
     if R is not None:
         R = to_float_tensor(R)
 
     squeeze = len(box3d.shape) == 1
-    
-    if squeeze:    
+
+    if squeeze:
         box3d = box3d.unsqueeze(0)
         if R is not None:
             R = R.unsqueeze(0)
@@ -262,7 +262,7 @@ def get_cuboid_verts(K, box3d, R=None, view_R=None, view_T=None):
 def approx_eval_resolution(h, w, scale_min=0, scale_max=1e10):
     """
     Approximates the resolution an image with h x w resolution would
-    run through a model at which constrains the scale to a min and max. 
+    run through a model at which constrains the scale to a min and max.
     Args:
         h (int): input resolution height
         w (int): input resolution width
@@ -291,7 +291,7 @@ def approx_eval_resolution(h, w, scale_min=0, scale_max=1e10):
 
 def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5):
     """
-    Computes priors via simple averaging or a custom K-Means clustering. 
+    Computes priors via simple averaging or a custom K-Means clustering.
     """
 
     annIds = datasets.getAnnIds()
@@ -338,7 +338,7 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
 
         x3d, y3d, z3d = ann['center_cam']
         w3d, h3d, l3d = ann['dimensions']
-        
+
         test_h, test_w, sf = approx_eval_resolution(im_h, im_w, test_scale_min, test_scale_max)
 
         # scale everything to test resolution
@@ -357,10 +357,10 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
 
     # TODO pandas is fairly inefficient to rely on for large scale.
     df_raw = pd.DataFrame(data_raw, columns=[
-        'name', 
-        'w', 'h', 'x3d', 'y3d', 'z3d', 
-        'w3d', 'h3d', 'l3d', 'volume', 
-        'dataset', 'image', 
+        'name',
+        'w', 'h', 'x3d', 'y3d', 'z3d',
+        'w3d', 'h3d', 'l3d', 'volume',
+        'dataset', 'image',
         'fy', 'f', 'scale'
     ])
 
@@ -377,8 +377,8 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
 
     # Each prior is pre-computed per category
     for cat in category_names:
-        
-        df_cat = df_raw[df_raw.name == cat]        
+
+        df_cat = df_raw[df_raw.name == cat]
 
         '''
         First compute static variable statistics
@@ -388,14 +388,14 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
         n = len(scales)
 
         if n > 0:
-            priors_dims_per_cat.append([[df_cat.w3d.mean(), df_cat.h3d.mean(), df_cat.l3d.mean()], [df_cat.w3d.std(), df_cat.h3d.std(), df_cat.l3d.std()]])            
-            priors_z3d_per_cat.append([df_cat.z3d.mean(), df_cat.z3d.std()])            
+            priors_dims_per_cat.append([[df_cat.w3d.mean(), df_cat.h3d.mean(), df_cat.l3d.mean()], [df_cat.w3d.std(), df_cat.h3d.std(), df_cat.l3d.std()]])
+            priors_z3d_per_cat.append([df_cat.z3d.mean(), df_cat.z3d.std()])
             priors_y3d_per_cat.append([df_cat.y3d.mean(), df_cat.y3d.std()])
-        
+
         else:
             # dummy data.
-            priors_dims_per_cat.append([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])            
-            priors_z3d_per_cat.append([50, 50])            
+            priors_dims_per_cat.append([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+            priors_z3d_per_cat.append([50, 50])
             priors_y3d_per_cat.append([1, 10])
 
         '''
@@ -409,7 +409,7 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
             for bin in range(n_bins):
 
                 in_cluster = assignments==bin
-                
+
                 if in_cluster.sum() < min_points_for_std:
                     in_cluster[match_quality[:, bin].topk(min_points_for_std)[1]] = True
 
@@ -421,22 +421,22 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
         if n_bins > 1:
 
             if n < min_points_for_std:
-                
+
                 print('Warning {} category has only {} valid samples...'.format(cat, n))
-                
+
                 # dummy data since category doesn't have available samples.
                 max_scale = cfg.MODEL.ANCHOR_GENERATOR.SIZES[-1][-1]
                 min_scale = cfg.MODEL.ANCHOR_GENERATOR.SIZES[0][0]
                 base = (max_scale / min_scale) ** (1 / (n_bins - 1))
                 cluster_scales = np.array([min_scale * (base ** i) for i in range(0, n_bins)])
-                
-                # default values are unused anyways in training. but range linearly 
-                # from 100 to 1 and ascend with 2D scale. 
+
+                # default values are unused anyways in training. but range linearly
+                # from 100 to 1 and ascend with 2D scale.
                 bin_priors_z = [[b, 15] for b in np.arange(100, 1, -(100-1)/n_bins)]
                 priors_bins.append((cat, cluster_scales.tolist(), bin_priors_z))
                 assert len(bin_priors_z) == n_bins, 'Broken default bin scaling.'
             else:
-            
+
                 max_scale = scales.max()
                 min_scale = scales.min()
                 base = (max_scale / min_scale) ** (1 / (n_bins - 1))
@@ -445,7 +445,7 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
                 best_score = -np.inf
 
                 for round in range(max_cluster_rounds):
-                    
+
                     # quality scores for gts and clusters (n x n_bins)
                     match_quality = -(cluster_scales.unsqueeze(0) - scales.unsqueeze(1)).abs()
 
@@ -456,7 +456,7 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
                     if np.round(round_score, 5) > best_score:
                         best_score = round_score
                         assignments = assignments_round
-                        
+
                         # make new clusters
                         cluster_scales = compute_cluster_scale_mean(scales, assignments, n_bins, match_quality)
 
@@ -466,7 +466,7 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
                 bin_priors_z = []
 
                 for bin in range(n_bins):
-                    
+
                     in_cluster = assignments == bin
 
                     # not enough in the cluster to compute reliable stats?
@@ -481,9 +481,9 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
                     z3d_std = df_cat.z3d[in_cluster].std()
 
                     bin_priors_z.append([z3d_mean, z3d_std])
-                
+
                 priors_bins.append((cat, cluster_scales.numpy().tolist(), bin_priors_z))
-        
+
     priors = {
         'priors_dims_per_cat': priors_dims_per_cat,
         'priors_z3d_per_cat': priors_z3d_per_cat,
@@ -492,25 +492,25 @@ def compute_priors(cfg, datasets, max_cluster_rounds=1000, min_points_for_std=5)
         'priors_y3d': priors_y3d,
         'priors_z3d': priors_z3d,
     }
-    
+
     return priors
 
 def convert_3d_box_to_2d(K, box3d, R=None, clipw=0, cliph=0, XYWH=True, min_z=0.20):
     """
-    Converts a 3D box to a 2D box via projection. 
+    Converts a 3D box to a 2D box via projection.
     Args:
         K (np.array): intrinsics matrix 3x3
         bbox3d (flexible): [[X Y Z W H L]]
         R (flexible): [np.array(3x3)]
         clipw (int): clip invalid X to the image bounds. Image width is usually used here.
         cliph (int): clip invalid Y to the image bounds. Image height is usually used here.
-        XYWH (bool): returns in XYWH if true, otherwise XYXY format. 
+        XYWH (bool): returns in XYWH if true, otherwise XYXY format.
         min_z: the threshold for how close a vertex is allowed to be before being
             considered as invalid for projection purposes.
     Returns:
         box2d (flexible): the 2D box results.
         behind_camera (bool): whether the projection has any points behind the camera plane.
-        fully_behind (bool): all points are behind the camera plane. 
+        fully_behind (bool): all points are behind the camera plane.
     """
 
     # bounds used for vertices behind image plane
@@ -522,17 +522,17 @@ def convert_3d_box_to_2d(K, box3d, R=None, clipw=0, cliph=0, XYWH=True, min_z=0.
     # make sure types are correct
     K = to_float_tensor(K)
     box3d = to_float_tensor(box3d)
-    
+
     if R is not None:
         R = to_float_tensor(R)
 
     squeeze = len(box3d.shape) == 1
-    
-    if squeeze:    
+
+    if squeeze:
         box3d = box3d.unsqueeze(0)
         if R is not None:
             R = R.unsqueeze(0)
-    
+
     n = len(box3d)
     verts2d, verts3d = get_cuboid_verts(K, box3d, R)
 
@@ -547,7 +547,7 @@ def convert_3d_box_to_2d(K, box3d, R=None, clipw=0, cliph=0, XYWH=True, min_z=0.
     topR = verts_behind & (verts_signs[:, :, 0] > 0) & (verts_signs[:, :, 1] < 0)
     botL = verts_behind & (verts_signs[:, :, 0] < 0) & (verts_signs[:, :, 1] > 0)
     botR = verts_behind & (verts_signs[:, :, 0] > 0) & (verts_signs[:, :, 1] > 0)
-    
+
     # clip values to be in bounds for invalid points
     verts2d[topL] = topL_bound
     verts2d[topR] = topR_bound
@@ -577,7 +577,7 @@ def convert_3d_box_to_2d(K, box3d, R=None, clipw=0, cliph=0, XYWH=True, min_z=0.
     return box2d, behind_camera, fully_behind
 
 
-# 
+#
 def compute_virtual_scale_from_focal_spaces(f, H, f0, H0):
     """
     Computes the scaling factor of depth from f0, H0 to f, H
@@ -595,7 +595,7 @@ def compute_virtual_scale_from_focal_spaces(f, H, f0, H0):
 def R_to_allocentric(K, R, u=None, v=None):
     """
     Convert a rotation matrix or series of rotation matrices to allocentric
-    representation given a 2D location (u, v) in pixels. 
+    representation given a 2D location (u, v) in pixels.
     When u or v are not available, we fall back on the principal point of K.
     """
     if type(K) == torch.Tensor:
@@ -605,7 +605,7 @@ def R_to_allocentric(K, R, u=None, v=None):
         sy = K[:, 1, 2]
 
         n = len(K)
-        
+
         oray = torch.stack(((u - sx)/fx, (v - sy)/fy, torch.ones_like(u))).T
         oray = oray / torch.linalg.norm(oray, dim=1).unsqueeze(1)
         angle = torch.acos(oray[:, -1])
@@ -618,7 +618,7 @@ def R_to_allocentric(K, R, u=None, v=None):
         valid_angle = angle > 0
 
         M = axis_angle_to_matrix(angle.unsqueeze(1)*axis/norms.unsqueeze(1))
-        
+
         R_view = R.clone()
         R_view[valid_angle] = torch.bmm(M[valid_angle].transpose(2, 1), R[valid_angle])
 
@@ -627,7 +627,7 @@ def R_to_allocentric(K, R, u=None, v=None):
         fy = K[1][1]
         sx = K[0][2]
         sy = K[1][2]
-        
+
         if u is None:
             u = sx
 
@@ -642,7 +642,7 @@ def R_to_allocentric(K, R, u=None, v=None):
             axis = np.cross(cray, oray)
             axis_torch = torch.from_numpy(angle*axis/np.linalg.norm(axis)).float()
             R_view = np.dot(axis_angle_to_matrix(axis_torch).numpy().T, R)
-        else: 
+        else:
             R_view = R
 
     return R_view
@@ -651,7 +651,7 @@ def R_to_allocentric(K, R, u=None, v=None):
 def R_from_allocentric(K, R_view, u=None, v=None):
     """
     Convert a rotation matrix or series of rotation matrices to egocentric
-    representation given a 2D location (u, v) in pixels. 
+    representation given a 2D location (u, v) in pixels.
     When u or v are not available, we fall back on the principal point of K.
     """
     if type(K) == torch.Tensor:
@@ -661,7 +661,7 @@ def R_from_allocentric(K, R_view, u=None, v=None):
         sy = K[:, 1, 2]
 
         n = len(K)
-        
+
         oray = torch.stack(((u - sx)/fx, (v - sy)/fy, torch.ones_like(u))).T
         oray = oray / torch.linalg.norm(oray, dim=1).unsqueeze(1)
         angle = torch.acos(oray[:, -1])
@@ -674,7 +674,7 @@ def R_from_allocentric(K, R_view, u=None, v=None):
         valid_angle = angle > 0
 
         M = axis_angle_to_matrix(angle.unsqueeze(1)*axis/norms.unsqueeze(1))
-        
+
         R = R_view.clone()
         R[valid_angle] = torch.bmm(M[valid_angle], R_view[valid_angle])
 
@@ -683,7 +683,7 @@ def R_from_allocentric(K, R_view, u=None, v=None):
         fy = K[1][1]
         sx = K[0][2]
         sy = K[1][2]
-        
+
         if u is None:
             u = sx
 
@@ -699,13 +699,13 @@ def R_from_allocentric(K, R_view, u=None, v=None):
             axis = np.array([-oray[1], oray[0], 0])
             axis_torch = torch.from_numpy(angle*axis/np.linalg.norm(axis)).float()
             R = np.dot(axis_angle_to_matrix(axis_torch).numpy(), R_view)
-        else: 
+        else:
             R = R_view
 
     return R
 
 def render_depth_map(K, box3d, pose, width, height, device=None):
-    
+
     cameras = get_camera(K, width, height)
     renderer = get_basic_renderer(cameras, width, height)
 
@@ -745,7 +745,7 @@ def estimate_visibility(K, box3d, pose, width, height, device=None):
 def estimate_truncation(K, box3d, R, imW, imH):
 
     box2d, out_of_bounds, fully_behind =  convert_3d_box_to_2d(K, box3d, R, imW, imH)
-    
+
     if fully_behind:
         return 1.0
 
@@ -761,7 +761,7 @@ def estimate_truncation(K, box3d, R, imW, imH):
 def mesh_cuboid(box3d=None, R=None, color=None):
 
     verts, faces = get_cuboid_verts_faces(box3d, R)
-    
+
     if verts.ndim == 2:
         verts = to_float_tensor(verts).unsqueeze(0)
         faces = to_float_tensor(faces).unsqueeze(0)
@@ -772,7 +772,7 @@ def mesh_cuboid(box3d=None, R=None, color=None):
         color = torch.tensor(color).view(1, 1, 3).expand(ninstances, 8, 3).float()
 
     # pass in a tensor of colors per box
-    elif color.ndim == 2: 
+    elif color is not None and color.ndim == 2:
         color = to_float_tensor(color).unsqueeze(1).expand(ninstances, 8, 3).float()
 
     device = verts.device
@@ -799,12 +799,12 @@ def get_camera(K, width, height, switch_hands=True, R=None, T=None):
 
     if R is None:
         camera = PerspectiveCameras(
-            focal_length=((fx, fy),), principal_point=((px, py),), 
+            focal_length=((fx, fy),), principal_point=((px, py),),
             image_size=((height, width),), in_ndc=False
         )
     else:
         camera = PerspectiveCameras(
-            focal_length=((fx, fy),), principal_point=((px, py),), 
+            focal_length=((fx, fy),), principal_point=((px, py),),
             image_size=((height, width),), in_ndc=False, R=R, T=T
         )
 
@@ -814,9 +814,9 @@ def get_camera(K, width, height, switch_hands=True, R=None, T=None):
 def get_basic_renderer(cameras, width, height, use_color=False):
 
     raster_settings = RasterizationSettings(
-        image_size=(height, width), 
-        blur_radius=0 if use_color else np.log(1. / 1e-4 - 1.) * 1e-4, 
-        faces_per_pixel=1, 
+        image_size=(height, width),
+        blur_radius=0 if use_color else np.log(1. / 1e-4 - 1.) * 1e-4,
+        faces_per_pixel=1,
         perspective_correct=False,
     )
 
@@ -829,7 +829,7 @@ def get_basic_renderer(cameras, width, height, use_color=False):
 
     renderer = MeshRenderer(
         rasterizer=MeshRasterizer(
-            cameras=cameras, 
+            cameras=cameras,
             raster_settings=raster_settings,
         ),
         shader=shader
@@ -880,7 +880,7 @@ def iou(box_a, box_b, mode='cross', ign_area_b=False):
 
         # np.ndarray
         elif data_type == np.ndarray:
-            union = np.expand_dims(area_a, 0) 
+            union = np.expand_dims(area_a, 0)
             if not ign_area_b:
                 union = union + np.expand_dims(area_b, 1) - inter
             return (inter / union).T
@@ -968,7 +968,7 @@ def intersect(box_a, box_b, mode='cross'):
 
 def scaled_sigmoid(vals, min=0.0, max=1.0):
     """
-    Simple helper function for a scaled sigmoid. 
+    Simple helper function for a scaled sigmoid.
     The output is bounded by (min, max)
     Args:
         vals (Tensor): input logits to scale
